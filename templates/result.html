@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>Prediction Result |Circuit Analytics</title>
+
+<link rel="stylesheet"
+      href="{{ url_for('static',
+      filename='style.css') }}">
+
+</head>
+
+<body>
+
+<div class="app-page auth-page">
+
+    <main class="panel result-card">
+
+        <div class="eyebrow">Prediction Result</div>
+
+        <h1>{{ target }}</h1>
+
+        <h2>
+
+            Predicted value
+
+        </h2>
+
+        <div class="prediction-value">
+
+            {{ prediction }}
+
+        </div>
+
+        <section class="input-summary entered-values-panel">
+
+            <h2>Manual Values Entered</h2>
+
+            <div class="input-summary-grid">
+
+                {% for item in input_values %}
+
+                <div class="input-summary-row">
+
+                    <span>{{ item.feature }}</span>
+
+                    <strong>{{ item.value }}</strong>
+
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+        </section>
+
+        <a class="button-link"
+           href="/trained-model">
+
+            Make Another Prediction
+        </a>
+
+    </main>
+
+</div>
+
+</body>
+
+</html>

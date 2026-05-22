@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>Invalid Input | Circuit Analytics</title>
+
+<link rel="stylesheet"
+      href="{{ url_for('static',
+      filename='style.css') }}">
+
+</head>
+
+<body>
+
+<div class="app-page auth-page">
+
+    <main class="panel result-card invalid-card">
+
+        <div class="eyebrow">Invalid Input</div>
+
+        <h1>Given input is not valid</h1>
+
+        <p>
+            The value entered for {{ feature }} is outside the trained data range.
+        </p>
+
+        <div class="invalid-detail">
+
+            <div>
+                <span>Entered value</span>
+                <strong>{{ value }}</strong>
+            </div>
+
+            <div>
+                <span>Allowed range</span>
+                <strong>
+                    {{ "%.6g"|format(min_value) }}
+                    to
+                    {{ "%.6g"|format(max_value) }}
+                </strong>
+            </div>
+
+        </div>
+
+        <a class="button-link"
+           href="/trained-model">
+
+            Enter Valid Values
+        </a>
+
+    </main>
+
+</div>
+
+</body>
+
+</html>

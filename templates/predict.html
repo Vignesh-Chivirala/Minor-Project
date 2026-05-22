@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>Dashboard | Circuit Analytics</title>
+
+<link rel="stylesheet"
+      href="{{ url_for('static',
+      filename='style.css') }}">
+
+</head>
+
+<body>
+
+<aside class="sidebar">
+
+    <div class="brand">
+        <span class="brand-mark">A</span>
+        <div>
+            <h2>Circuit</h2>
+            <p>Analytics</p>
+        </div>
+    </div>
+
+    <a class="active" href="#">Dashboard</a>
+
+    <a href="/">Upload Dataset</a>
+
+    <a href="/trained-model">Trained Model</a>
+
+    <a href="#prediction-history">Prediction</a>
+
+</aside>
+
+<main class="main">
+
+    <div class="topbar">
+
+        <div>
+            <div class="eyebrow">Model Workspace</div>
+            <h1> Circuit Dashboard</h1>
+        </div>
+
+        <a class="secondary-action"
+           href="/">New Dataset</a>
+
+    </div>
+
+    <!-- Cards -->
+
+    <section class="metrics-grid">
+
+        <div class="metric-card">
+
+            <h3>Best Algorithm</h3>
+
+            <p>{{ model_name }}</p>
+
+        </div>
+
+        <div class="metric-card">
+
+            <h3>Model Score</h3>
+
+            <p>{{ accuracy }}</p>
+
+        </div>
+
+        <div class="metric-card">
+
+            <h3>Prediction</h3>
+
+            <p>{{ target }}</p>
+
+        </div>
+
+    </section>
+
+    <!-- Graph -->
+
+    <section class="panel chart-panel">
+
+        <div class="section-header">
+            <div>
+                <h2>Actual vs Predicted</h2>
+                <p>Performance comparison on the test split.</p>
+            </div>
+        </div>
+
+        <img src="/static/graph.png"
+             alt="Actual versus predicted model chart">
+
+    </section>
+
+    <!-- Prediction Form -->
+
+    <section class="panel form-container">
+
+        <div class="section-header">
+            <div>
+                <h2>Prediction Inputs</h2>
+                <p>Enter values manually to estimate {{ target }}.</p>
+            </div>
+        </div>
+
+        <form action="/predict"
+              method="POST">
+
+            <div class="grid">
+
+                {% for feature in features %}
+
+                <div class="input-group">
+
+                    <label>{{ feature }}</label>
+
+                    {% if feature_ranges and feature in feature_ranges %}
+
+                    <span class="range-hint">
+                        Allowed range:
+                        {{ "%.6g"|format(feature_ranges[feature].min) }}
+                        to
+                        {{ "%.6g"|format(feature_ranges[feature].max) }}
+                    </span>
+
+                    {% endif %}
+
+                    <input type="number"
+                           step="any"
+                           name="{{ feature }}"
+                           data-feature-input="{{ feature }}"
+                           {% if feature_ranges and feature in feature_ranges %}
+                           min="{{ feature_ranges[feature].min }}"
+                           max="{{ feature_ranges[feature].max }}"
+                           data-min="{{ feature_ranges[feature].min }}"
+                           data-max="{{ feature_ranges[feature].max }}"
+                           {% endif %}
+                           required>
+
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+            <button class="predict-btn"
+                    type="submit">
+
+                Prediction
+
+            </button>
+
+        </form>
+
+    </section>
+
+    <section class="panel form-container">
+
+        <div class="section-header">
+            <div>
+                <h2>Manual Values Preview</h2>
+                <p>The values you enter above appear here before prediction.</p>
+            </div>
+        </div>
+
+        <div class="input-summary-grid preview-grid">
+
+            {% for feature in features %}
+
+            <div class="input-summary-row">
+
+                <span>{{ feature }}</span>
+
+                <strong data-preview-value="{{ feature }}">Not entered</strong>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+    </section>
+
+    <section class="panel form-container history-panel"
+             id="prediction-history">
+
+        <div class="section-header">
+            <div>
+                <h2>Prediction History</h2>
+                <p>All previous manual values entered on this website with their output.</p>
+            </div>
+        </div>
+
+        {% if prediction_history %}
+
+        <div class="history-list">
+
+            {% for item in prediction_history %}
+
+            <article class="history-card">
+
+                <div class="history-card-header">
+
+                    <div>
+                        <h3>{{ item.target }}</h3>
+                        <p>{{ item.created_at }}</p>
+                    </div>
+
+                    <div class="history-output">
+                        <span>Output</span>
+                        <strong>{{ item.prediction }}</strong>
+                    </div>
+
+                </div>
+
+                <div class="history-inputs">
+
+                    {% for input in item.inputs %}
+
+                    <div>
+                        <span>{{ input.feature }}</span>
+                        <strong>{{ input.value }}</strong>
+                    </div>
+
+                    {% endfor %}
+
+                </div>
+
+            </article>
+
+            {% endfor %}
+
+        </div>
+
+        {% else %}
+
+        <div class="empty-state">
+
+            No manual predictions yet.
+
+        </div>
+
+        {% endif %}
+
+    </section>
+
+</main>
+
+<script>
+    const previews = new Map(
+        Array.from(document.querySelectorAll("[data-preview-value]")).map((item) => [
+            item.dataset.previewValue,
+            item
+        ])
+    );
+
+    document.querySelectorAll("[data-feature-input]").forEach((input) => {
+        const preview = previews.get(input.dataset.featureInput);
+
+        const updatePreview = () => {
+            const value = input.value.trim();
+
+            preview.classList.remove("invalid-preview");
+
+            if (!value) {
+                preview.textContent = "Not entered";
+                return;
+            }
+
+            const numericValue = Number(value);
+            const minValue = Number(input.dataset.min);
+            const maxValue = Number(input.dataset.max);
+            const hasRange = !Number.isNaN(minValue) && !Number.isNaN(maxValue);
+
+            if (hasRange && (numericValue < minValue || numericValue > maxValue)) {
+                preview.textContent = `${value} - invalid range`;
+                preview.classList.add("invalid-preview");
+                return;
+            }
+
+            preview.textContent = value;
+        };
+
+        input.addEventListener("input", updatePreview);
+        updatePreview();
+    });
+</script>
+
+</body>
+
+</html>
